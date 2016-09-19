@@ -1,0 +1,36 @@
+{
+  "name": "stacy",
+  "version": "1.0.0",
+  "description": "Used in an AWS Lambda function to process Contentful CMS publish/unpublish events read from a Kinesis stream and publish website content in S3.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/boylesoftware/stacy.git"
+  },
+  "keywords": [
+    "contentful",
+    "lambda",
+    "s3",
+    "website"
+  ],
+  "author": "Lev Himmelfarb <lev@boylesoftware.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/boylesoftware/stacy/issues"
+  },
+  "homepage": "https://github.com/boylesoftware/stacy#readme",
+  "engines": {
+    "node": ">=4.3 <5"
+  },
+  "devDependencies": {
+    "aws-sdk": "^2.6.3"
+  },
+  "dependencies": {
+    "contentful": "^3.6.4",
+    "handlebars": "^4.0.5",
+    "marked": "^0.3.6"
+  }
+}

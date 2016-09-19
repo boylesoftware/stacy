@@ -1,0 +1,22 @@
+The setup-aws.sh script can be used for automatic setup of some important parts
+of the AWS infrastructure for Stacy using AWS CLI. The script creates and
+configures:
+
+- The Kinesis stream.
+- The API Gateway resource.
+- The IAM role used by Stacy.
+
+The pre-requisites for the script include installed AWS CLI and a config.sh
+file, which is included from the script and can be used to set and export some
+environment variables (for example, to configure credentials for the AWS CLI).
+
+The script does not perform a complete infrastructure setup. The setup must be
+completed manually. Specifically, at least the following things must be taken
+care of separately:
+
+- In the API Gateway, the API keys and usage plans must be configured and the
+  Stacy API needs to be deployed.
+- Confirugration, state, and website content S3 buckets need to be created and
+  access needs to be configured for the Stacy role.
+- The Stacy Lambda function needs to be deployed.
+- Website static content (images, CSS, etc.) needs to be uploaded into S3.
