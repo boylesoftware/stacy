@@ -16,15 +16,14 @@
     "postversion": "git push && git push --tags"
   },
   "dependencies": {
-    "chokidar": "^3.2.1",
+    "chokidar": "^3.2.2",
     "commander": "^3.0.2",
     "contentful": "^7.10.0",
-    "dotenv": "^8.1.0",
+    "dotenv": "^8.2.0",
     "find-up": "^4.1.0",
     "fs-extra": "^8.1.0",
     "handlebars": "^4.4.3",
-    "mime": "^2.4.4",
-    "stacy-runtime": "^2.0.0-dev.0"
+    "mime": "^2.4.4"
   },
   "devDependencies": {
     "eslint": "^6.5.1"
