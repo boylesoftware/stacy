@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "id": "https://boylesoftware.com/schemas/stacy-2/schema",
+  "title": "Stacy Configuration",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "staticDir": {
+      "type": "string",
+      "description": "Directory with static site content, relative to the project root.",
+      "default": "static"
+    },
+    "templatesDir": {
+      "type": "string",
+      "description": "Directory with templates, relative to the project root.",
+      "default": "templates"
+    },
+    "pageContentTypes": {
+      "type": "array",
+      "description": "Contentful content type IDs for top website page entries.",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      },
+      "default": ["page"]
+    },
+    "maxModuleDepth": {
+      "type": "integer",
+      "description": "Maximum module nested level.",
+      "minimum": 1,
+      "maximum": 10,
+      "default": 3
+    },
+    "assetsPath": {
+      "type": "string",
+      "description": "Path in the generated website where the assets are published.",
+      "default": "assets"
+    },
+    "pageSlugField": {
+      "type": "string",
+      "description": "Name of the required page entry field that is used to construct the path and the filename in the generated website where the page is published.",
+      "default": "slug"
+    }
+  },
+  "additionalProperties": false
+}

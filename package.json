@@ -1,37 +1,35 @@
 {
   "name": "stacy",
-  "version": "1.0.2",
-  "description": "Used in an AWS Lambda function to process Contentful CMS publish/unpublish events read from a Kinesis stream and publish website content in S3.",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "postversion": "git push --tags"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/boylesoftware/stacy.git"
-  },
-  "keywords": [
-    "contentful",
-    "lambda",
-    "s3",
-    "website"
-  ],
-  "author": "Lev Himmelfarb <lev@boylesoftware.com>",
-  "license": "MIT",
+  "version": "2.0.0-dev.0",
+  "description": "Automatic static website generator and publisher for Contentful CMS and AWS.",
+  "homepage": "https://github.com/boylesoftware/stacy",
   "bugs": {
     "url": "https://github.com/boylesoftware/stacy/issues"
   },
-  "homepage": "https://github.com/boylesoftware/stacy#readme",
-  "engines": {
-    "node": ">=4.3 <5"
-  },
-  "devDependencies": {
-    "aws-sdk": "^2.6.3"
+  "license": "MIT",
+  "author": "Lev Himmelfarb <lev@boylesoftware.com>",
+  "bin": "./lib/cli.js",
+  "repository": "github:boylesoftware/stacy",
+  "scripts": {
+    "lint": "eslint .",
+    "preversion": "npm run lint",
+    "postversion": "git push && git push --tags"
   },
   "dependencies": {
-    "contentful": "^3.6.4",
-    "handlebars": "^4.0.5",
-    "marked": "^0.3.6"
+    "chokidar": "^3.2.1",
+    "commander": "^3.0.2",
+    "contentful": "^7.10.0",
+    "dotenv": "^8.1.0",
+    "find-up": "^4.1.0",
+    "fs-extra": "^8.1.0",
+    "handlebars": "^4.4.3",
+    "mime": "^2.4.4",
+    "stacy-runtime": "^2.0.0-dev.0"
+  },
+  "devDependencies": {
+    "eslint": "^6.5.1"
+  },
+  "engines": {
+    "node": ">=10.16.3"
   }
 }
