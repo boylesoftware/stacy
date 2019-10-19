@@ -7,6 +7,11 @@
     "$schema": {
       "type": "string"
     },
+    "siteId": {
+      "type": "string",
+      "description": "Unique URL-fiendly site identifier.",
+      "pattern": "^[a-z0-9-]+$"
+    },
     "staticDir": {
       "type": "string",
       "description": "Directory with static site content, relative to the project root.",
@@ -44,5 +49,8 @@
       "default": "slug"
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "required": [
+    "siteId"
+  ]
 }
