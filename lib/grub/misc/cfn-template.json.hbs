@@ -13,9 +13,15 @@
         {
           "Label": { "default": "S3 Buckets" },
           "Parameters": [
+            "LambdaFunctionsBucket",
             "TargetBucket",
-            "TargetFolder",
-            "LambdaFunctionsBucket"
+            "TargetFolder"
+          ]
+        },
+        {
+          "Label": { "default": "Contentful CMS" },
+          "Parameters": [
+            "ContentfulAccessToken"
           ]
         },
         {
@@ -27,14 +33,28 @@
             "PublishEventVisibilityTimeout",
             "PublishEventsQueueMessageRetentionPeriod"
           ]
+        },
+        {
+          "Label": { "default": "Other" },
+          "Parameters": [
+            "LogsRetentionDays",
+            "ErrorsTopic"
+          ]
         }
       ],
       "ParameterLabels": {
-        "SiteID": { "default": "Site ID" },
+        "SiteID": { "default": "Stacy Site ID" },
+        "LambdaFunctionsBucket": { "default": "Lambda Functions Bucket" },
         "TargetBucket": { "default": "Target Bucket" },
         "TargetFolder": { "default": "Target Folder" },
-        "LambdaFunctionsBucket": { "default": "Lambda Functions Bucket" },
-        "MaxPublishEventSize": { "default": "Maximum Publish Event Size" }
+        "ContentfulAccessToken": { "default": "Access Token" },
+        "MaxPublishEventSize": { "default": "Maximum Event Size" },
+        "MaxPublishEventsBatch": { "default": "Maximum Events Batch" },
+        "PublisherTimeout": { "default": "Events Batch Processing Timeout" },
+        "PublishEventVisibilityTimeout": { "default": "Event Visibility Timeout" },
+        "PublishEventsQueueMessageRetentionPeriod": { "default": "Event Expiration Timeout" },
+        "LogsRetentionDays": { "default": "Logs Retention Period" },
+        "ErrorsTopic": { "default": "Errors Topic" }
       }
     }
   },
@@ -44,7 +64,8 @@
       "Description": "Site identifier.",
       "Type": "String",
       "MaxLength": 30,
-      "AllowedPattern": "[a-z0-9][a-z0-9-]*"
+      "AllowedPattern": "[a-z0-9][a-z0-9-]*",
+      "Default": "{{siteId}}"
     },
     "LambdaFunctionsBucket": {
       "Description": "Name of the S3 bucket used for the Lambda function packages.",
@@ -64,6 +85,12 @@
       "Description": "Optional folder in the target S3 bucket where the site is published.",
       "Type": "String"
     },
+    "ContentfulAccessToken": {
+      "Description": "Contentful Content Delivery API access token.",
+      "Type": "String",
+      "AllowedPattern": "[0-9a-f]{64}",
+      "NoEcho": true
+    },
     "PublishEventsQueueMessageRetentionPeriod": {
       "Description": "Number of seconds to keep unprocessed publish events in the queue before they are discarded.",
       "Type": "Number",
@@ -72,7 +99,7 @@
       "Default": 86400
     },
     "MaxPublishEventSize": {
-      "Description": "Maximum size in bytes for a Contentful publish event.",
+      "Description": "Maximum size in bytes for a Contentful publish event. This is determined by a maximum size of an entry.",
       "Type": "Number",
       "MinValue": 1024,
       "MaxValue": 262144,
@@ -112,10 +139,6 @@
       "MaxLength": 256,
       "AllowedPattern": "[A-Za-z0-9_-]*"
     }
-  },
-
-  "Conditions": {
-    "HasErrorsTopic": { "Fn::Not": [ { "Fn::Equals": [ { "Ref": "ErrorsTopic" }, "" ] } ] }
   },
 
   "Resources": {
@@ -219,17 +242,10 @@
           "Variables": {
             "ENTRIES_TABLE_NAME": { "Ref": "EntriesTable" },
             "TARGET_BUCKET": { "Ref": "TargetBucket" },
-            "TARGET_FOLDER": { "Ref": "TargetFolder" }
+            "TARGET_FOLDER": { "Ref": "TargetFolder" },
+            "CF_ACCESS_TOKEN": { "Ref": "ContentfulAccessToken" },
+            "ERRORS_TOPIC": { "Ref": "ErrorsTopic" }
           }
-        },
-        "DeadLetterConfig": {
-          "Fn::If": [
-            "HasErrorsTopic",
-            {
-              "TargetArn": { "Ref": "ErrorsTopic" }
-            },
-            { "Ref": "AWS::NoValue" }
-          ]
         }
       }
     },
@@ -307,7 +323,7 @@
     "PublisherApi": {
       "Type": "AWS::ApiGateway::RestApi",
       "Properties": {
-        "Name": { "Fn::Sub": "Stacy-${SiteID}" },
+        "Name": { "Fn::Sub": "Stacy: ${SiteID}" },
         "Description": "Stacy API for Contentful webhooks.",
         "ApiKeySourceType": "HEADER",
         "EndpointConfiguration": {
@@ -350,8 +366,7 @@
           },
           "PassthroughBehavior": "NEVER",
           "RequestTemplates": {
-            "application/vnd.contentful.management.v1+json": "Action=SendMessage&MessageBody=$util.urlEncode($input.json('$'))",
-            "application/json": "Action=SendMessage&MessageBody=$util.urlEncode($input.json('$'))"
+            "application/vnd.contentful.management.v1+json": "Action=SendMessage&MessageBody=$util.urlEncode(\"{\"\"event\"\":\"\"$input.params('X-Contentful-Topic')\"\",\"\"payload\"\":$input.json('$')}\")"
           },
           "IntegrationResponses": [
             {
@@ -402,7 +417,9 @@
           {
             "HttpMethod": "*",
             "ResourcePath": "/*",
-            "LoggingLevel": "INFO"
+            "LoggingLevel": "OFF",
+            "ThrottlingRateLimit": -1,
+            "ThrottlingBurstLimit": -1
           }
         ]
       }
@@ -412,7 +429,7 @@
       "Type": "AWS::ApiGateway::ApiKey",
       "DependsOn": [ "PublisherApiDeployment", "PublisherApiProdStage" ],
       "Properties": {
-        "Name": { "Fn::Sub": "Stacy-${SiteID}" },
+        "Name": { "Fn::Sub": "Stacy: ${SiteID}" },
         "Enabled": true,
         "StageKeys": [
           {
@@ -426,7 +443,7 @@
     "PublisherApiUsagePlan": {
       "Type": "AWS::ApiGateway::UsagePlan",
       "Properties": {
-        "UsagePlanName": { "Fn::Sub": "Stacy-${SiteID}" },
+        "UsagePlanName": { "Fn::Sub": "Stacy: ${SiteID}" },
         "Throttle": {
           "RateLimit": 10,
           "BurstLimit": 5
