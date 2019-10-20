@@ -1,0 +1,462 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": { "default": "Target Website" },
+          "Parameters": [
+            "SiteID"
+          ]
+        },
+        {
+          "Label": { "default": "S3 Buckets" },
+          "Parameters": [
+            "TargetBucket",
+            "TargetFolder",
+            "LambdaFunctionsBucket"
+          ]
+        },
+        {
+          "Label": { "default": "Publish Events Processing" },
+          "Parameters": [
+            "MaxPublishEventSize",
+            "MaxPublishEventsBatch",
+            "PublisherTimeout",
+            "PublishEventVisibilityTimeout",
+            "PublishEventsQueueMessageRetentionPeriod"
+          ]
+        }
+      ],
+      "ParameterLabels": {
+        "SiteID": { "default": "Site ID" },
+        "TargetBucket": { "default": "Target Bucket" },
+        "TargetFolder": { "default": "Target Folder" },
+        "LambdaFunctionsBucket": { "default": "Lambda Functions Bucket" },
+        "MaxPublishEventSize": { "default": "Maximum Publish Event Size" }
+      }
+    }
+  },
+
+  "Parameters": {
+    "SiteID": {
+      "Description": "Site identifier.",
+      "Type": "String",
+      "MaxLength": 30,
+      "AllowedPattern": "[a-z0-9][a-z0-9-]*"
+    },
+    "LambdaFunctionsBucket": {
+      "Description": "Name of the S3 bucket used for the Lambda function packages.",
+      "Type": "String",
+      "MinLength": 3,
+      "MaxLength": 63,
+      "AllowedPattern": "[a-z0-9][a-z0-9.-]*"
+    },
+    "TargetBucket": {
+      "Description": "Name of the S3 bucket where the site is published.",
+      "Type": "String",
+      "MinLength": 3,
+      "MaxLength": 63,
+      "AllowedPattern": "[a-z0-9][a-z0-9.-]*"
+    },
+    "TargetFolder": {
+      "Description": "Optional folder in the target S3 bucket where the site is published.",
+      "Type": "String"
+    },
+    "PublishEventsQueueMessageRetentionPeriod": {
+      "Description": "Number of seconds to keep unprocessed publish events in the queue before they are discarded.",
+      "Type": "Number",
+      "MinValue": 60,
+      "MaxValue": 1209600,
+      "Default": 86400
+    },
+    "MaxPublishEventSize": {
+      "Description": "Maximum size in bytes for a Contentful publish event.",
+      "Type": "Number",
+      "MinValue": 1024,
+      "MaxValue": 262144,
+      "Default": 4096
+    },
+    "MaxPublishEventsBatch": {
+      "Description": "Maximum number of publish events passed to the publisher for processing in a single batch.",
+      "Type": "Number",
+      "MinValue": 1,
+      "MaxValue": 10,
+      "Default": 5
+    },
+    "PublisherTimeout": {
+      "Description": "Maximum number of seconds allocated to the publisher to process a publish events batch.",
+      "Type": "Number",
+      "MinValue": 10,
+      "MaxValue": 600,
+      "Default": 30
+    },
+    "PublishEventVisibilityTimeout": {
+      "Description": "Number of seconds before a publish events batch failed to be processed becomes available for another attempt. Recommended to be 6 times of the publisher timeout.",
+      "Type": "Number",
+      "MinValue": 10,
+      "MaxValue": 600,
+      "Default": 180
+    },
+    "LogsRetentionDays": {
+      "Description": "Number of days to keep publisher Lambda function and API Gateway logs in CloudWatch.",
+      "Type": "Number",
+      "MinValue": 1,
+      "MaxValue": 3653,
+      "Default": 14
+    },
+    "ErrorsTopic": {
+      "Description": "Optional name of an SNS topic, to which to send publish events that failed to process.",
+      "Type": "String",
+      "MaxLength": 256,
+      "AllowedPattern": "[A-Za-z0-9_-]*"
+    }
+  },
+
+  "Conditions": {
+    "HasErrorsTopic": { "Fn::Not": [ { "Fn::Equals": [ { "Ref": "ErrorsTopic" }, "" ] } ] }
+  },
+
+  "Resources": {
+
+    "PulishEventsQueue": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "QueueName": { "Fn::Sub": "stacy-${SiteID}-publish-events" },
+        "MaximumMessageSize": { "Ref": "MaxPublishEventSize" },
+        "MessageRetentionPeriod": { "Ref": "PublishEventsQueueMessageRetentionPeriod" },
+        "VisibilityTimeout": { "Ref": "PublishEventVisibilityTimeout" }
+      }
+    },
+
+    "EntriesTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "TableName": { "Fn::Sub": "stacy-${SiteID}-entries" },
+        "BillingMode": "PAY_PER_REQUEST",
+        "AttributeDefinitions": [
+          { "AttributeName": "EntryId", "AttributeType": "S" }
+        ],
+        "KeySchema": [
+          { "AttributeName": "EntryId", "KeyType": "HASH" }
+        ]
+      }
+    },
+
+    "PublisherRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "StacyPublisher",
+        "Description": "Role for Stacy's publisher Lambda function that processes publish events from Contentful.",
+        "Path": { "Fn::Sub": "/stacy/${SiteID}/" },
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "StacyPublisherRolePolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "sqs:ReceiveMessage",
+                    "sqs:DeleteMessage",
+                    "sqs:GetQueueAttributes"
+                  ],
+                  "Resource": { "Fn::GetAtt": [ "PulishEventsQueue", "Arn" ] }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:GetItem",
+                    "dynamodb:UpdateItem"
+                  ],
+                  "Resource": { "Fn::GetAtt": [ "EntriesTable", "Arn" ] }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+
+    "PublisherLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "FunctionName": { "Fn::Sub": "stacy-${SiteID}-publisher" },
+        "Description": "Reads publish events from the queue, processes them and publishes content to the site's target S3 bucket.",
+        "Role": { "Fn::GetAtt": [ "PublisherRole", "Arn" ] },
+        "Code": {
+          "S3Bucket": { "Ref": "LambdaFunctionsBucket" },
+          "S3Key": { "Fn::Sub": "stacy-${SiteID}-publisher.zip" }
+        },
+        "Runtime": "nodejs10.x",
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Timeout": { "Ref": "PublisherTimeout" },
+        "Environment": {
+          "Variables": {
+            "ENTRIES_TABLE_NAME": { "Ref": "EntriesTable" },
+            "TARGET_BUCKET": { "Ref": "TargetBucket" },
+            "TARGET_FOLDER": { "Ref": "TargetFolder" }
+          }
+        },
+        "DeadLetterConfig": {
+          "Fn::If": [
+            "HasErrorsTopic",
+            {
+              "TargetArn": { "Ref": "ErrorsTopic" }
+            },
+            { "Ref": "AWS::NoValue" }
+          ]
+        }
+      }
+    },
+
+    "PublishEventsMapping": {
+      "Type": "AWS::Lambda::EventSourceMapping",
+      "Properties": {
+        "EventSourceArn": { "Fn::GetAtt": [ "PulishEventsQueue", "Arn" ] },
+        "FunctionName" : { "Fn::GetAtt": [ "PublisherLambdaFunction", "Arn" ] },
+        "BatchSize": { "Ref": "MaxPublishEventsBatch" },
+        "Enabled": true
+      }
+    },
+
+    "PublisherLambdaLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": { "Fn::Join": [ "", [
+          "/aws/lambda/",
+          { "Ref": "PublisherLambdaFunction" }
+        ] ] },
+        "RetentionInDays": { "Ref": "LogsRetentionDays" }
+      }
+    },
+
+    "PublisherApiAccessLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": { "Fn::Sub": "/stacy/${SiteID}/access" },
+        "RetentionInDays": 90
+      }
+    },
+
+    "PublisherApiRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "StacyPublisherApi",
+        "Description": "Role for Stacy's API Gateway endpoint that receives publish events from Contentful.",
+        "Path": { "Fn::Sub": "/stacy/${SiteID}/" },
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "apigateway.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+        ],
+        "Policies": [
+          {
+            "PolicyName": "StacyPublisherApiRolePolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "sqs:SendMessage"
+                  ],
+                  "Resource": { "Fn::GetAtt": [ "PulishEventsQueue", "Arn" ] }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+
+    "PublisherApi": {
+      "Type": "AWS::ApiGateway::RestApi",
+      "Properties": {
+        "Name": { "Fn::Sub": "Stacy-${SiteID}" },
+        "Description": "Stacy API for Contentful webhooks.",
+        "ApiKeySourceType": "HEADER",
+        "EndpointConfiguration": {
+          "Types": [ "REGIONAL" ]
+        }
+      }
+    },
+
+    "PublisherApiResource": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "RestApiId": { "Ref": "PublisherApi" },
+        "ParentId": { "Fn::GetAtt": [ "PublisherApi", "RootResourceId" ] },
+        "PathPart": "publish"
+      }
+    },
+
+    "PublisherApiResourceMethod": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "RestApiId": { "Ref": "PublisherApi" },
+        "ResourceId": { "Ref": "PublisherApiResource" },
+        "HttpMethod": "POST",
+        "ApiKeyRequired": true,
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "Type": "AWS",
+          "IntegrationHttpMethod": "POST",
+          "Uri": { "Fn::Join": [ "", [
+            "arn:aws:apigateway:",
+            { "Ref": "AWS::Region" },
+            ":sqs:path/",
+            { "Ref": "AWS::AccountId" },
+            "/",
+            { "Fn::GetAtt": [ "PulishEventsQueue", "QueueName" ] }
+          ] ] },
+          "Credentials": { "Fn::GetAtt": [ "PublisherApiRole", "Arn" ] },
+          "RequestParameters": {
+            "integration.request.header.Content-Type": "'application/x-www-form-urlencoded'"
+          },
+          "PassthroughBehavior": "NEVER",
+          "RequestTemplates": {
+            "application/vnd.contentful.management.v1+json": "Action=SendMessage&MessageBody=$util.urlEncode($input.json('$'))",
+            "application/json": "Action=SendMessage&MessageBody=$util.urlEncode($input.json('$'))"
+          },
+          "IntegrationResponses": [
+            {
+              "StatusCode": "200"
+            },
+            {
+              "SelectionPattern": "[^2].*",
+              "StatusCode": "500"
+            }
+          ]
+        },
+        "MethodResponses": [
+          {
+            "StatusCode": "200",
+            "ResponseModels": {
+              "application/xml": "Empty"
+            }
+          },
+          {
+            "StatusCode": "500",
+            "ResponseModels": {
+              "application/xml": "Empty"
+            }
+          }
+        ]
+      }
+    },
+
+    "PublisherApiDeployment": {
+      "Type": "AWS::ApiGateway::Deployment",
+      "DependsOn": [ "PublisherApiResourceMethod" ],
+      "Properties" : {
+        "RestApiId": { "Ref": "PublisherApi" }
+      }
+    },
+
+    "PublisherApiProdStage": {
+      "Type": "AWS::ApiGateway::Stage",
+      "Properties": {
+        "RestApiId": { "Ref": "PublisherApi" },
+        "DeploymentId": { "Ref": "PublisherApiDeployment" },
+        "StageName": "prod",
+        "AccessLogSetting": {
+          "DestinationArn": { "Fn::GetAtt": [ "PublisherApiAccessLogGroup", "Arn" ] },
+          "Format": "$context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] \"$context.httpMethod $context.resourcePath $context.protocol\" $context.status $context.responseLength $context.requestId"
+        },
+        "MethodSettings": [
+          {
+            "HttpMethod": "*",
+            "ResourcePath": "/*",
+            "LoggingLevel": "INFO"
+          }
+        ]
+      }
+    },
+
+    "PublisherApiKey": {
+      "Type": "AWS::ApiGateway::ApiKey",
+      "DependsOn": [ "PublisherApiDeployment", "PublisherApiProdStage" ],
+      "Properties": {
+        "Name": { "Fn::Sub": "Stacy-${SiteID}" },
+        "Enabled": true,
+        "StageKeys": [
+          {
+            "RestApiId": { "Ref": "PublisherApi" },
+            "StageName": { "Ref": "PublisherApiProdStage" }
+          }
+        ]
+      }
+    },
+
+    "PublisherApiUsagePlan": {
+      "Type": "AWS::ApiGateway::UsagePlan",
+      "Properties": {
+        "UsagePlanName": { "Fn::Sub": "Stacy-${SiteID}" },
+        "Throttle": {
+          "RateLimit": 10,
+          "BurstLimit": 5
+        },
+        "ApiStages": [
+          {
+            "ApiId": { "Ref": "PublisherApi" },
+            "Stage": { "Ref": "PublisherApiProdStage" }
+          }
+        ]
+      }
+    },
+
+    "PublisherApiUsagePlanKey": {
+      "Type" :"AWS::ApiGateway::UsagePlanKey",
+      "Properties": {
+        "UsagePlanId": { "Ref": "PublisherApiUsagePlan" },
+        "KeyId": { "Ref": "PublisherApiKey" },
+        "KeyType": "API_KEY"
+      }
+    }
+  },
+
+  "Outputs": {
+    "PublisherRoleArn": {
+      "Description": "ARN of the publisher role. The role must be given relevant access to the target S3 bucket.",
+      "Value": { "Fn::GetAtt": [ "PublisherRole", "Arn" ] },
+      "Export": {
+        "Name": { "Fn::Sub": "${AWS::StackName}:PublisherRoleArn" }
+      }
+    }
+  }
+}
