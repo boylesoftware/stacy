@@ -21,6 +21,7 @@
         {
           "Label": { "default": "Contentful CMS" },
           "Parameters": [
+            "ContentfulHost",
             "ContentfulAccessToken"
           ]
         },
@@ -47,6 +48,7 @@
         "LambdaFunctionsBucket": { "default": "Lambda Functions Bucket" },
         "TargetBucket": { "default": "Target Bucket" },
         "TargetFolder": { "default": "Target Folder" },
+        "ContentfulHost": { "default": "Host" },
         "ContentfulAccessToken": { "default": "Access Token" },
         "MaxPublishEventSize": { "default": "Maximum Event Size" },
         "MaxPublishEventsBatch": { "default": "Maximum Events Batch" },
@@ -84,6 +86,12 @@
     "TargetFolder": {
       "Description": "Optional folder in the target S3 bucket where the site is published.",
       "Type": "String"
+    },
+    "ContentfulHost": {
+      "Description": "Contentful Content Delivery API host.",
+      "Type": "String",
+      "AllowedPattern": "[A-Za-z0-9_~-]+(\\.[A-Za-z0-9_~-]+)*",
+      "Default": "cdn.contentful.com"
     },
     "ContentfulAccessToken": {
       "Description": "Contentful Content Delivery API access token.",
@@ -141,6 +149,10 @@
     }
   },
 
+  "Conditions": {
+    "HasErrorsTopic": { "Fn::Not": [ { "Fn::Equals": [ { "Ref": "ErrorsTopic" }, "" ] } ] }
+  },
+
   "Resources": {
 
     "PulishEventsQueue": {
@@ -153,16 +165,16 @@
       }
     },
 
-    "EntriesTable": {
+    "SiteMetaTable": {
       "Type": "AWS::DynamoDB::Table",
       "Properties": {
-        "TableName": { "Fn::Sub": "stacy-${SiteID}-entries" },
+        "TableName": { "Fn::Sub": "stacy-${SiteID}-site-meta" },
         "BillingMode": "PAY_PER_REQUEST",
         "AttributeDefinitions": [
-          { "AttributeName": "EntryId", "AttributeType": "S" }
+          { "AttributeName": "Id", "AttributeType": "S" }
         ],
         "KeySchema": [
-          { "AttributeName": "EntryId", "KeyType": "HASH" }
+          { "AttributeName": "Id", "KeyType": "HASH" }
         ]
       }
     },
@@ -213,10 +225,29 @@
                   "Effect": "Allow",
                   "Action": [
                     "dynamodb:GetItem",
-                    "dynamodb:UpdateItem"
+                    "dynamodb:UpdateItem",
+                    "dynamodb:DeleteItem"
                   ],
-                  "Resource": { "Fn::GetAtt": [ "EntriesTable", "Arn" ] }
-                }
+                  "Resource": { "Fn::GetAtt": [ "SiteMetaTable", "Arn" ] }
+                },
+                { "Fn::If": [
+                  "HasErrorsTopic",
+                  {
+                    "Effect": "Allow",
+                    "Action": [
+                      "sns:Publish"
+                    ],
+                    "Resource": { "Fn::Join": [ "", [
+                      "arn:aws:sns:",
+                      { "Ref": "AWS::Region" },
+                      ":",
+                      { "Ref": "AWS::AccountId" },
+                      ":",
+                      { "Ref": "ErrorsTopic" }
+                    ] ] }
+                  },
+                  { "Ref": "AWS::NoValue" }
+                ] }
               ]
             }
           }
@@ -240,11 +271,24 @@
         "Timeout": { "Ref": "PublisherTimeout" },
         "Environment": {
           "Variables": {
-            "ENTRIES_TABLE_NAME": { "Ref": "EntriesTable" },
+            "SITE_META_TABLE": { "Ref": "SiteMetaTable" },
             "TARGET_BUCKET": { "Ref": "TargetBucket" },
             "TARGET_FOLDER": { "Ref": "TargetFolder" },
+            "CF_HOST": { "Ref": "ContentfulHost" },
             "CF_ACCESS_TOKEN": { "Ref": "ContentfulAccessToken" },
-            "ERRORS_TOPIC": { "Ref": "ErrorsTopic" }
+            "ERRORS_TOPIC_ARN": { "Fn::If": [
+              "HasErrorsTopic",
+              { "Fn::Join": [ "", [
+                "arn:aws:sns:",
+                { "Ref": "AWS::Region" },
+                ":",
+                { "Ref": "AWS::AccountId" },
+                ":",
+                { "Ref": "ErrorsTopic" }
+              ] ] },
+              { "Ref": "AWS::NoValue" }
+            ] }
+
           }
         }
       }
