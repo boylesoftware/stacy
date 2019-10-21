@@ -294,7 +294,7 @@
       }
     },
 
-    "PublishEventsMapping": {
+    "PublishEventSourceMapping": {
       "Type": "AWS::Lambda::EventSourceMapping",
       "Properties": {
         "EventSourceArn": { "Fn::GetAtt": [ "PulishEventsQueue", "Arn" ] },
@@ -517,6 +517,27 @@
       "Value": { "Fn::GetAtt": [ "PublisherRole", "Arn" ] },
       "Export": {
         "Name": { "Fn::Sub": "${AWS::StackName}:PublisherRoleArn" }
+      }
+    },
+    "PublishEventSourceMappingId": {
+      "Description": "ID of the event source mapping between the publish events SQS queue and the publisher Lambda function.",
+      "Value": { "Ref": "PublishEventSourceMapping" },
+      "Export": {
+        "Name": { "Fn::Sub": "${AWS::StackName}:PublishEventSourceMappingId" }
+      }
+    },
+    "PublisherLambdaFunctionName": {
+      "Description": "Name of the publisher Lambda function.",
+      "Value": { "Ref": "PublisherLambdaFunction" },
+      "Export": {
+        "Name": { "Fn::Sub": "${AWS::StackName}:PublisherLambdaFunctionName" }
+      }
+    },
+    "SiteMetaTableName": {
+      "Description": "Name of the DynamoDB table used to store site metadata.",
+      "Value": { "Ref": "SiteMetaTable" },
+      "Export": {
+        "Name": { "Fn::Sub": "${AWS::StackName}:SiteMetaTableName" }
       }
     }
   }
