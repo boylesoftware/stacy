@@ -16,6 +16,8 @@
     "postversion": "git push && git push --tags"
   },
   "dependencies": {
+    "@contentful/rich-text-html-renderer": "^13.4.0",
+    "@contentful/rich-text-types": "^13.4.0",
     "archiver": "^3.1.1",
     "chokidar": "^3.2.2",
     "commander": "^3.0.2",
