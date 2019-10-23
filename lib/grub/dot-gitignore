@@ -1,7 +1,7 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
 # compiled output
-/dist/
+/build/
 
 # dependencies
 /node_modules/
@@ -10,6 +10,7 @@
 /.env
 
 # misc
+stacy-debug.log
 /npm-debug.log
 .DS_Store
 ._*
