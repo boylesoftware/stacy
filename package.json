@@ -1,6 +1,6 @@
 {
   "name": "stacy",
-  "version": "2.0.0-beta.2",
+  "version": "2.0.0-beta.3",
   "description": "Automatic static website generator and publisher for Contentful CMS and AWS.",
   "homepage": "https://github.com/boylesoftware/stacy",
   "bugs": {
