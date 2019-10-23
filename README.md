@@ -22,17 +22,17 @@ Start with installing Stacy globally:
 npm install -g stacy
 ```
 
-In your Contentful space, go to Space settings&rarr;API keys and add an API key in Content delivery/preview tokens. Note Space ID and Content Delivery API access token values that you will use to connect your Stacy development environment to your Contentful space.
+In your Contentful space, go to _Space settings&rarr;API keys_ and add an API key in _Content delivery/preview tokens_. Note _Space ID_ and _Content Delivery API access token_ values that you will use to connect your Stacy environment to your Contentful space.
 
-Now, you can generate initial project for your website. For example:
+Now, you can generate initial project for your website:
 
 ```
 stacy new --cf-space <your space ID> --cf-access-token <your access token> mywebsite
 ```
 
-This will create a new project directory named "mywebsite" in the current directory. The "mywebsite" value is known as the site ID. Use a different value that identifies your website. The value should be URL-fiendly (small letters, digits and dashes).
+This will create a new project directory named "mywebsite" in the current directory. The "mywebsite" value is known as the _site ID_. Use a different value that identifies your website. The value should be URL-fiendly (small letters, digits and dashes).
 
-In your project directory, put static content under `/static` (this gets copied over to your website as-is) and put your entry templates under `/templates`. The name of the template file (sans the extention) must exactly match the corresponding entry content type in your Contentful Content model. Under `/templates`, the template files can be organized in subfolders. However, the file names must be unique across all subfolders because they are used to uniquely match templates to entry content types (subfolders in `/templates` play no role).
+In your project directory, put static content under `/static` (this gets copied over to your website as-is) and put your entry templates under `/templates`. The name of the template file (sans the extention) must exactly match the corresponding entry content type in your Contentful _Content model_. Under `/templates`, the template files can be organized in subfolders. However, the file names must be unique across all subfolders because they are used to uniquely match templates to entry content types (subfolders in `/templates` play no role).
 
 Note: Normally, a template, combined with an entry's content, produces HTML. If you need to produce some other type of content, you can add an extension to the template name. For example, `page.hbs` produces HTML. To produce plain text use `page.txt.hbs`. This also means that `page.hbs` and `page.html.hbs` are the same.
 
@@ -44,7 +44,7 @@ stacy serve
 
 You can see your website at `http://localhost:8080/`. After you edit any template, static content or content in Contentful, just reload the page.
 
-To stop Stacy local webserver do `Ctrl+C`.
+To stop Stacy local webserver use `Ctrl+C`.
 
 Run `stacy --help` to see other available commands.
 
@@ -52,13 +52,13 @@ The content of your project directory you can check in to a git repository such 
 
 ## Templates
 
-Inside you templates all entry fields are available by the Field ID as defined in your Content model. You can reference them directly in your template. For example:
+Inside you templates all entry fields are available by the _Field ID_ as defined in your _Content model_. You can reference them directly in your template. For example:
 
 ```handlebars
 <h3>{{caption}}</h3>
 ```
 
-This will output the value of the entry's `caption` field. Note, that it's Field ID which is used here and not the field Name.
+This will output the value of the entry's `caption` field. Note, that it's _Field ID_ which is used here and **not** the field _Name_.
 
 Stacy adds a few special [helpers](https://handlebarsjs.com/#helpers) that you can use in your templates:
 
@@ -94,7 +94,7 @@ Stacy adds a few special [helpers](https://handlebarsjs.com/#helpers) that you c
   {{{markdown description}}}
   ```
 
-  Note that tripple-braces used here because the helper outputs HTML which needs not to be escaped.
+  Note the tripple-braces needed here because the helper generates HTML which needs not to be escaped.
 
 * `richText <rich text field>` - Render rich text field. For example:
 
@@ -116,16 +116,14 @@ Stacy adds a few special [helpers](https://handlebarsjs.com/#helpers) that you c
 
 When you are ready to deploy your website in AWS, you first need to setup Stacy infrastructure under your AWS account. You must perform several steps before you can do it:
 
-1. Create the target [S3](https://aws.amazon.com/s3/) bucket. This where your website will be published and from where it will be served (probably via [CloudFront](https://aws.amazon.com/cloudfront/)). Alternatively, you can use a bucket that you already have.
+1. Create the target [S3](https://aws.amazon.com/s3/) bucket. This is where your website will be published and from where it will be served (probably via [CloudFront](https://aws.amazon.com/cloudfront/)). Alternatively, you can use a bucket that you already have (Stacy also supports publishing in a subfolder in the target bucket).
 
-2. If you don't have it yet, create an S3 bucket that Stacy will use to upload the publisher [Lambda](https://aws.amazon.com/lambda/) function package.
-
-   Note: The publisher Lambda function is the piece that responds to Contentful publish and unpublish events and updates the relevant pages and assets in the target S3 bucket.
+2. If you don't have it yet, create an S3 bucket that Stacy will use to upload the publisher [Lambda](https://aws.amazon.com/lambda/) function package. The publisher Lambda function is the piece that responds to Contentful _publish_ and _unpublish_ events and updates the relevant pages and assets in the target S3 bucket.
 
 3. Build the publisher package:
 
    ```
-   stacy build-publisger
+   stacy build-publisher
    ```
 
    This will create the publisher Lambda function package in your project under `/build/stacy-mywebsite-publisher.zip`. Upload this file to your Lambda functions S3 bucket.
@@ -153,9 +151,9 @@ Once the CloudFormation stack is created, you need to adjust the target S3 bucke
 }
 ```
 
-In the above policy replace Stacy publisher role ARN with the value that you can find in your CloudFormation stack's `PublisherRoleArn` output parameter, and the bucket name with the target website bucket name (the bucket, to which the policy is being applied).
+In the above policy replace Stacy publisher role ARN with the value that you can find in your CloudFormation stack's `PublisherRoleArn` output parameter, and the bucket name with the target website bucket name (the bucket, to which the policy is applied).
 
-Now you have to prepare your development environment for publishing your website. For that, open and edit `.env` file in your website project. In in, set all `AWS_*` variables to the correct values. Note, that you can find the value for `AWS_PUBLISH_EVENT_SOURCE_MAPPING` variable in the CloudFormation stack's `PublishEventSourceMappingId` output parameter.
+Now you have to prepare your development environment for publishing. Open and edit `.env` file in your website project. In it, set all `AWS_*` variables to the correct values. Note, that you can find the value for `AWS_PUBLISH_EVENT_SOURCE_MAPPING` variable in the CloudFormation stack's `PublishEventSourceMappingId` output parameter.
 
 Once your `.env` file is correctly setup, you can publish your website using:
 
@@ -163,12 +161,12 @@ Once your `.env` file is correctly setup, you can publish your website using:
 stacy publish
 ```
 
-One last setup step is to configure a webhook in your Contentful space to call Stacy publisher on publish and unpublish events. In your AWS account, in [API Gateway](https://aws.amazon.com/api-gateway/) service find the API created for you by Stacy. There is only one method `POST /publish` in the API's `prod` stage. Note its invoke URL.
+One last setup step is to configure a webhook in your Contentful space to call Stacy publisher on _publish_ and _unpublish_ events. In your AWS account, in [API Gateway](https://aws.amazon.com/api-gateway/) service find the API created for you by Stacy. There is only one method `POST /publish` in the API's `prod` stage. Note its _Invoke URL_.
 
-Also, go to the API Keys section and note the value of the API key created for Stacy.
+Also, go to the _API Keys_ section and note the value of the API key created for Stacy.
 
-In your Contentful space go to Space settings&rarr;Webhooks and add a webhook. Put the API Gatwey's invoke URL in the URL field (leave the method `POST`). Then pick Select specific triggering events option in the Triggers section. Check Publish and Unpublish checkboxes in Entry and Asset rows (4 checkboxes checked altogether).
+In your Contentful space go to _Space settings&rarr;Webhooks_ and add a webhook. Put the API Gatwey's invoke URL in the URL field (leave the method `POST`). Then pick _Select specific triggering events_ option in the _Triggers_ section. Check _Publish_ and _Unpublish_ checkboxes in _Entry_ and _Asset_ rows (4 checkboxes checked altogether).
 
-In the Headers section click Add custom header. Put "X-API-Key" in the Key field and in the Value field put the API key from the API Gateway's API Keys.
+In the _Headers_ section click _Add custom header_. Put "X-API-Key" in the _Key_ field and in the _Value_ field put the API key from the API Gateway.
 
-Once you save this webhook, publishing and unpulishing entries and assets in Contentful will trigger the publisher in the AWS setup.
+Once you save this webhook, publishing and unpulishing entries and assets in Contentful will trigger the publisher in the AWS setup and you are all set!
