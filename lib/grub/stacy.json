@@ -1,0 +1,4 @@
+{
+  "$schema": "./node_modules/stacy/lib/config-schema.json",
+  "siteId": "{{siteId}}"
+}

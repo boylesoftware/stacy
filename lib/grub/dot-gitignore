@@ -1,0 +1,17 @@
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+
+# compiled output
+/dist/
+
+# dependencies
+/node_modules/
+
+# site environment configuration
+/.env
+
+# misc
+/npm-debug.log
+.DS_Store
+._*
+Thumbs.db
+*~

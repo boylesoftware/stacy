@@ -1,0 +1,65 @@
+#
+# Site environment configuration
+#
+
+################################################################################
+#
+# Contentful CMS configuration
+#
+################################################################################
+
+#
+# Space ID
+#
+CF_SPACE="{{cfSpace}}"
+
+#
+# Environment
+#
+{{#if cfEnvironment}}CF_ENVIRONMENT="{{cfEnvironment}}"{{else}}#CF_ENVIRONMENT="master"{{/if}}
+
+#
+# Content Delivery API access token
+#
+CF_ACCESS_TOKEN="{{cfAccessToken}}"
+
+#
+# Content Delivery API host
+#
+{{#if cfHost}}CF_HOST="{{cfHost}}"{{else}}#CF_HOST="cdn.contentful.com"{{/if}}
+
+
+################################################################################
+#
+# Target AWS environment configuration
+#
+# This configuration is only used by the "publish" command
+#
+################################################################################
+
+#
+# AWS CLI profile
+#
+#AWS_PROFILE="default"
+
+#
+# Name of the S3 bucket where the site is published
+#
+AWS_TARGET_BUCKET="{{siteId}}"
+
+#
+# Optional folder under the target bucket where the site is published.
+# Should not have any slashes in the begining nor end.
+#
+#AWS_TARGET_FOLDER=""
+
+#
+# Name of the S3 bucket where Stacy publisher Lambda function package is kept
+#
+AWS_LAMBDA_FUNCTIONS_BUCKET="{{siteId}}-lambda-functions"
+
+#
+# ID (UUID) of the event source mapping between the publish events SQS queue
+# and Stacy publisher Lambda function
+#
+AWS_PUBLISH_EVENT_SOURCE_MAPPING="xxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx"

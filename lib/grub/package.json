@@ -1,0 +1,15 @@
+{
+  "name": "{{siteId}}",
+  "version": "0.0.0",
+  "scripts": {
+    "stacy": "stacy"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "stacy": "^{{stacyVersion}}"
+  },
+  "engines": {
+    "node": ">=10.16.3"
+  },
+  "private": true
+}
