@@ -8,7 +8,7 @@ What makes Stacy different from many existing static website generators is that 
 
 When using Stacy, your website is an [NPM](https://www.npmjs.com/) project usually checked in a git repository for version control. The project includes your Handlebars templates and static content (such as CSS stylesheets, images used in the website design, fonts, etc.), while the website content lives in the Contentful space. From the website project the website developers use Stacy command line tool to develop, publish and republish the site. Once the website is published in Amazon Cloud, the content authors work only with Contentful UI.
 
-See [Creating a Website with Stacy](blob/master/docs/tutorial/index.md) for a detailed tutorial/walkthrough.
+See [Creating a Website with Stacy](docs/tutorial/index.md) for a detailed tutorial/walkthrough.
 
 ## Getting Started
 
