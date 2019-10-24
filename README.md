@@ -2,7 +2,7 @@
 
 Stacy is a website generator that combines content from [Contentful CMS](https://www.contentful.com/) with [Handlebars](https://handlebarsjs.com/) templates to create the website pages.
 
-Stacy matches Contentful's entry content types with Handlebars templates in your website project in a one-to-one relationship&mdash;there is a template for every entry type defined in your _Content model_. There are two types of entries from Stacy's point of view: page entries and module entries. A page entry combined with its template produces a single website page at a unique URL. Module entries can be included in pages and other modules using Contentful's _Reference_ fields to create reusable pieces of content or simply to provide content and templates structure by breaking it up into smaller pieces.
+Stacy matches Contentful's entry content types with Handlebars templates in your website project in a one-to-one relationship&mdash;there is a template for every entry type defined in your _Content model_. There are two types of entries from Stacy's point of view: _page entries_ and _module entries_. A page entry combined with its template produces a single website page at a unique URL. Module entries can be included in pages and other modules using Contentful's _Reference_ fields to create reusable pieces of content or simply to provide content and templates structure by breaking it up into smaller pieces.
 
 What makes Stacy different from many existing static website generators is that it supports automatic publishing of the website to an S3 bucket in [Amazon Cloud](https://aws.amazon.com/), from where it can be served on the Internet. Stacy deploys special infrastructure in Amazon Cloud which can be connected to Contentful via its [Webhooks](https://www.contentful.com/developers/docs/concepts/webhooks/) functionality. When content is updated in your Contentful space, your website's infrastructure deployed by Stacy in Amazon Cloud gets notified and automatically regenerates and republishes only those pages of your website that are affected by the update. No manual website regeneration and redeployment is required.
 
@@ -111,6 +111,18 @@ Stacy adds a few special [helpers](https://handlebarsjs.com/#helpers) that you c
   ```
 
   This helper may be useful for diagnosing problems.
+
+## Content Model
+
+As mentioned above, there is a one-to-one relationship between content types you define in your Contentful space's _Content model_ and templates.
+
+Note: Strictly speaking, you can have more than one template for a given content type to allow generation of different types of files for the same content entry. For example, for content type ID `module` you could have templates `module.html.hbs` and `module.xml.hbs`. First tempplate will produce an HTML file for the entry and the second will produce an XML file.
+
+When you define a content type, note the _Api Identifier_ (also known as _content type ID_). The template file for the content type will have to have the same name (plus the extention).
+
+There is one requirement for content types for page entries (as opposed to module entries): a page content type must define a required _slug_ field. The value in the field will be determining the name of the generated file when the content entry is combined with the corresponding template. For example, if slug value for a page entry is "index", the generated page will be "/index.html". If the slug is "more/terms", the page will be "/more/terms.html". And so on.
+
+By default, the field ID for the slug field must be `slug`. The ID can be overridden in the project's `stacy.json` file. Besides making the slug field required in the content type definition, it is also recommended to associate a custom match pattern validator with it to ensure the field value's specific format. The regular expression for the validator can be `^\w[\w-]*(/\w[\w-]*)*$`.
 
 ## Publishing in Amazon Cloud
 
