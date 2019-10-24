@@ -179,6 +179,6 @@ Also, go to the _API Keys_ section and note the value of the API key created for
 
 In your Contentful space go to _Space settings&rarr;Webhooks_ and add a webhook. Put the API Gatwey's invoke URL in the URL field (leave the method `POST`). Then pick _Select specific triggering events_ option in the _Triggers_ section. Check _Publish_ and _Unpublish_ checkboxes in _Entry_ and _Asset_ rows (4 checkboxes checked altogether).
 
-In the _Headers_ section click _Add custom header_. Put "X-API-Key" in the _Key_ field and in the _Value_ field put the API key from the API Gateway.
+In the _Headers_ section click _Add secret header_. Put "X-API-Key" in the _Key_ field and in the _Value_ field put the API key from the API Gateway.
 
 Once you save this webhook, publishing and unpulishing entries and assets in Contentful will trigger the publisher in the AWS setup and you are all set!

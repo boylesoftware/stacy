@@ -85,7 +85,8 @@
     },
     "TargetFolder": {
       "Description": "Optional folder in the target S3 bucket where the site is published.",
-      "Type": "String"
+      "Type": "String",
+      "Default": ""
     },
     "ContentfulHost": {
       "Description": "Contentful Content Delivery API host.",
@@ -96,7 +97,6 @@
     "ContentfulAccessToken": {
       "Description": "Contentful Content Delivery API access token.",
       "Type": "String",
-      "AllowedPattern": "[0-9a-f]{64}",
       "NoEcho": true
     },
     "PublishEventsQueueMessageRetentionPeriod": {
@@ -145,7 +145,8 @@
       "Description": "Optional name of an SNS topic, to which to send publish events that failed to process.",
       "Type": "String",
       "MaxLength": 256,
-      "AllowedPattern": "[A-Za-z0-9_-]*"
+      "AllowedPattern": "[A-Za-z0-9_-]*",
+      "Default": ""
     }
   },
 

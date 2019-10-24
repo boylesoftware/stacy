@@ -56,7 +56,7 @@ AWS_TARGET_BUCKET="{{siteId}}"
 #
 # Name of the S3 bucket where Stacy publisher Lambda function package is kept
 #
-AWS_LAMBDA_FUNCTIONS_BUCKET="{{siteId}}-lambda-functions"
+AWS_LAMBDA_FUNCTIONS_BUCKET="{{siteId}}-lambda"
 
 #
 # ID (UUID) of the event source mapping between the publish events SQS queue
