@@ -8,6 +8,9 @@
   },
   "license": "MIT",
   "author": "Lev Himmelfarb <lev@boylesoftware.com>",
+  "files": [
+    "lib"
+  ],
   "bin": "./lib/cli.js",
   "repository": "github:boylesoftware/stacy",
   "scripts": {
