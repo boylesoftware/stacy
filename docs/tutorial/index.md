@@ -66,7 +66,7 @@ And save the field.
 
 Before we save the content type, there is one more special field that needs to be added&mdash; the _slug_ field. Every content type that corresponds to a page as a whole (as opposed to an includable module) must have a field named "slug". The field will be used to define at what URL the page will be available in the target website. For example, if we create an entry of content type _Page_ and we provide the slug as "my-best-page", the page will be available in our website under URL "/my-best-page.html".
 
-Let's create the field. Click _Add field_ one more time, select _Text_ field type and enter "Slug" for the field name (make sure the _Field ID_ is "slug"&mdash;this is the ID Stacy will expect it to be). Proceed to _Create and configure_. In the _Validations_ make the field required, unique (every page entry has to have its own unique slug to correspond to a unique page URL in the target website) and also check the _Match a specific pattern_ checkbox. Enter pattern "^\w[\w-]*(/\w[\w-]*)*$" (it is a regular expression):
+Let's create the field. Click _Add field_ one more time, select _Text_ field type and enter "Slug" for the field name (make sure the _Field ID_ is "slug"&mdash;this is the ID Stacy will expect it to be). Proceed to _Create and configure_. In the _Validations_ make the field required, unique (every page entry has to have its own unique slug to correspond to a unique page URL in the target website) and also check the _Match a specific pattern_ checkbox. Enter pattern `^\w[\w-]*(/\w[\w-]*)*$` (it is a regular expression):
 
 ![Page Slug Field Validations](page-slug-field-validations.png)
 
